@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Kobo Pinterest Extension</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header with gradient background -->
+    <div class="header">
+      <div class="logo-wrapper">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="brand">
+          <h1>Kobo</h1>
+          <span class="subtitle">Pinterest Saver</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Login Section -->
+    <div id="loginSection" class="section active">
+      <div class="welcome-message">
+        <h2>Welcome Back</h2>
+        <p>Sign in to start saving inspiration</p>
+      </div>
+      
+      <form id="loginForm" class="modern-form">
+        <div class="input-group">
+          <input 
+            type="email" 
+            id="email" 
+            placeholder=" "
+            required
+            class="modern-input"
+          >
+          <label for="email" class="floating-label">Email Address</label>
+          <div class="input-line"></div>
+        </div>
+        
+        <div class="input-group">
+          <input 
+            type="password" 
+            id="password" 
+            placeholder=" "
+            required
+            class="modern-input"
+          >
+          <label for="password" class="floating-label">Password</label>
+          <div class="input-line"></div>
+        </div>
+        
+        <button type="submit" class="primary-btn">
+          <span class="btn-text">Sign In</span>
+          <div class="btn-loader" style="display: none;">
+            <div class="spinner"></div>
+          </div>
+        </button>
+        
+        <div class="form-footer">
+          <a href="#" class="link">Forgot password?</a>
+          <span class="separator">•</span>
+          <a href="#" class="link">Create account</a>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Status Section -->
+    <div id="statusSection" class="section" style="display: none;">
+      <div class="status-card">
+        <div class="status-header">
+          <div class="status-indicator">
+            <div class="pulse-dot"></div>
+            <span>Connected</span>
+          </div>
+          <button class="icon-btn" id="settingsBtn" title="Settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="user-card">
+          <div class="user-avatar">
+            <span id="userInitial">U</span>
+          </div>
+          <div class="user-details">
+            <div class="user-name" id="userName">User</div>
+            <div class="user-email" id="userEmail">user@example.com</div>
+          </div>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="savedCount">0</div>
+            <div class="stat-label">Saved Today</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="boardCount">0</div>
+            <div class="stat-label">Boards</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="quick-actions">
+        <h3>Quick Actions</h3>
+        <div class="action-buttons">
+          <button class="action-btn" id="captureBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>Capture Area</span>
+          </button>
+          <button class="action-btn" id="boardsBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"/>
+              <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"/>
+              <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"/>
+              <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>My Boards</span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="instruction-card">
+        <div class="instruction-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" fill-opacity="0.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="instruction-text">
+          <strong>Pro Tip:</strong> Hover over any image on the web and click the Kobo button to save it instantly!
+        </div>
+      </div>
+      
+      <button id="signOutBtn" class="secondary-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Sign Out</span>
+      </button>
+    </div>
+    
+    <!-- Toast Message -->
+    <div id="toast" class="toast"></div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
