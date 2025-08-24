@@ -8,6 +8,9 @@ let koboSession = null;
 chrome.storage.local.get(['koboSession'], (result) => {
   if (result.koboSession) {
     koboSession = result.koboSession;
+    console.log('Loaded saved session:', koboSession);
+  } else {
+    console.log('No saved session found');
   }
 });
 
@@ -64,6 +67,7 @@ async function authenticateUser(credentials) {
     
     const data = await response.json();
     console.log('Auth response status:', response.status);
+    console.log('Auth response data:', data);
     
     if (!response.ok) {
       console.error('Auth failed:', data);
@@ -71,8 +75,9 @@ async function authenticateUser(credentials) {
     }
     
     // Store session - Kobo returns a user object with token
+    // The API returns: { access_token: "...", token_type: "Bearer", user: {...} }
     koboSession = {
-      token: data.token || data.access_token || data.data?.token,
+      token: data.access_token || data.token || data.data?.token,
       email: credentials.email,
       userId: data.user?.id || data.data?.user?.id,
       userName: data.user?.name || data.data?.user?.name,
@@ -87,9 +92,13 @@ async function authenticateUser(credentials) {
     
     // Save to storage
     await chrome.storage.local.set({ koboSession });
-    console.log('Session saved successfully');
+    console.log('Session saved successfully:', koboSession);
     
-    return { success: true };
+    return { 
+      success: true,
+      token: koboSession.token,
+      name: koboSession.userName
+    };
   } catch (error) {
     console.error('Authentication error:', error.message);
     throw error;
@@ -98,11 +107,30 @@ async function authenticateUser(credentials) {
 
 // Function to save image to Kobo
 async function saveImageToKobo(data) {
-  if (!koboSession) {
+  console.log('saveImageToKobo called with:', data);
+  console.log('Current session:', koboSession);
+  
+  if (!koboSession || !koboSession.token) {
+    console.error('No session or token available');
     throw new Error('Please sign in to Kobo first');
   }
   
   try {
+    const requestBody = {
+      imageUrl: data.imageUrl,
+      title: data.title || 'Saved from web',
+      description: data.description,
+      pageUrl: data.pageUrl
+    };
+    
+    console.log('Sending request to:', `${KOBO_API_URL}/inspiration/save-pin`);
+    console.log('Request headers:', {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${koboSession.token}`,
+      'Accept': 'application/json'
+    });
+    console.log('Request body:', requestBody);
+    
     // Use the new inspiration endpoint
     const response = await fetch(`${KOBO_API_URL}/inspiration/save-pin`, {
       method: 'POST',
@@ -111,27 +139,28 @@ async function saveImageToKobo(data) {
         'Authorization': `Bearer ${koboSession.token}`,
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        imageUrl: data.imageUrl,
-        title: data.title || document.title,
-        description: data.description,
-        pageUrl: data.pageUrl
-      })
+      body: JSON.stringify(requestBody)
     });
+    
+    console.log('Response status:', response.status);
     
     if (response.status === 401) {
       // Session expired
+      console.error('401 Unauthorized - clearing session');
       koboSession = null;
       await chrome.storage.local.remove(['koboSession']);
       throw new Error('Session expired. Please sign in again.');
     }
     
     const result = await response.json();
+    console.log('Response data:', result);
     
     if (!response.ok) {
+      console.error('Save failed:', result);
       throw new Error(result.message || 'Failed to save to Kobo');
     }
     
+    console.log('Save successful:', result);
     return result;
   } catch (error) {
     console.error('Save error:', error);
