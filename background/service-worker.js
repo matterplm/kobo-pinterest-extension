@@ -81,7 +81,9 @@ async function authenticateUser(credentials) {
       email: credentials.email,
       userId: data.user?.id || data.data?.user?.id,
       userName: data.user?.name || data.data?.user?.name,
-      user: data.user || data.data?.user
+      user: data.user || data.data?.user,
+      selectedBrand: data.selectedBrand,
+      companyId: data.user?.company_id || data.company_id
     };
     
     // Check if we got a token
@@ -131,8 +133,8 @@ async function saveImageToKobo(data) {
     });
     console.log('Request body:', requestBody);
     
-    // Use the new inspiration endpoint
-    const response = await fetch(`${KOBO_API_URL}/inspiration/save-pin`, {
+    // First try the new inspiration endpoint, fallback to moodboards if it doesn't exist
+    let response = await fetch(`${KOBO_API_URL}/inspiration/save-pin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -141,6 +143,49 @@ async function saveImageToKobo(data) {
       },
       body: JSON.stringify(requestBody)
     });
+    
+    // If inspiration endpoint doesn't exist (404 or 401), try moodboards
+    if (response.status === 404 || response.status === 401) {
+      console.log('Inspiration endpoint not available, trying moodboards endpoint...');
+      
+      // Create canvas data for moodboards endpoint
+      const canvasData = {
+        version: "5.3.0",
+        objects: [{
+          type: "image",
+          version: "5.3.0",
+          originX: "left",
+          originY: "top",
+          left: 100,
+          top: 100,
+          width: 400,
+          height: 300,
+          scaleX: 1,
+          scaleY: 1,
+          angle: 0,
+          src: data.imageUrl,
+          crossOrigin: "anonymous"
+        }],
+        background: "#ffffff"
+      };
+      
+      response = await fetch(`${KOBO_API_URL}/moodboards`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${koboSession.token}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          name: data.title || 'Pinterest Save - ' + new Date().toLocaleDateString(),
+          description: `Saved from: ${data.pageUrl}`,
+          canvas_data: JSON.stringify(canvasData),
+          thumbnail: data.imageUrl,
+          brand_id: koboSession.selectedBrand || koboSession.user?.selectedBrand || null,
+          company_id: koboSession.companyId || koboSession.user?.company_id || null
+        })
+      });
+    }
     
     console.log('Response status:', response.status);
     
