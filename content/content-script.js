@@ -47,7 +47,12 @@
 
     const host = document.createElement('div');
     host.id = 'kobo-inspiration-root';
-    host.style.cssText = 'all:initial;position:static;';
+    // Never `all: initial` here. An inline style beats the :host rule, so it
+    // resets font-family to the initial value — a serif — and the entire shadow
+    // tree inherits Times no matter what :host declares. That bug shipped once
+    // already. The :host block resets inherited properties explicitly instead;
+    // this only neutralises the host's own box.
+    host.style.cssText = 'position:static;display:block;width:0;height:0;margin:0;padding:0;border:0;';
     (document.body || document.documentElement).appendChild(host);
 
     shadow = host.attachShadow({ mode: 'open' });

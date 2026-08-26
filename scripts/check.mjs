@@ -118,5 +118,23 @@ console.log('\nshadow-dom classes');
     : pass(`${used.size} classes all have style rules`);
 }
 
+/* ------------------------------------------------------- inline reset -- */
+
+// `all: initial` in an inline style on the shadow host outranks the :host rule
+// and silently resets font-family to a serif. It has caused the whole sheet to
+// render in Times once already; this stops it coming back.
+console.log('\ninline reset');
+{
+  // Strip comments first — the fix is documented in a comment that mentions the
+  // very string being banned, and prose must not trip the guard.
+  const source = readFileSync('content/content-script.js', 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
+
+  /all\s*:\s*initial/.test(source)
+    ? fail('content-script.js sets `all: initial` — this resets font-family to a serif on the shadow host')
+    : pass('no `all: initial` on the shadow host');
+}
+
 console.log(failures ? `\n${failures} problem(s) found\n` : '\nAll checks passed\n');
 process.exit(failures ? 1 : 0);
