@@ -34,12 +34,15 @@ links set at save time.
 
 ## Distribution
 
-Not yet published. There is no Chrome Web Store listing and no extension ID,
-so today the only way to run it is load-unpacked. **`PUBLISHING.md` is the
-runbook** for getting it listed — store copy, permission justifications and
-data disclosures are all written; what remains needs a Google account.
+Listed on the Chrome Web Store, owned by `subscriptions@kobolabs.io`.
 
-Note there is also nothing in the Kōbō app pointing users at the extension.
+* **Extension ID:** `fjhfgodiilcekkabhbbfbfoccofhcnej`
+* **Install URL:** https://chromewebstore.google.com/detail/fjhfgodiilcekkabhbbfbfoccofhcnej
+
+`PUBLISHING.md` is the runbook for releasing updates and for what each listing
+field contains.
+
+Note there is still nothing in the Kōbō app pointing users at the extension.
 Publishing and being discoverable are separate jobs; see the end of
 `PUBLISHING.md`.
 

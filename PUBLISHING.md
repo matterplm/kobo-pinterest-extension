@@ -1,5 +1,18 @@
 # Publishing to the Chrome Web Store
 
+## Published listing
+
+| | |
+|---|---|
+| Extension ID | `fjhfgodiilcekkabhbbfbfoccofhcnej` |
+| Install URL | https://chromewebstore.google.com/detail/fjhfgodiilcekkabhbbfbfoccofhcnej |
+| Owner account | `subscriptions@kobolabs.io` |
+| First submitted | 2026-08-26, v2.0.0 |
+
+The ID is permanent — it is derived from the signing key Google generated on
+first upload and cannot change. Every install link embeds it, so treat it as a
+stable identifier you can hard-code.
+
 The extension has never been distributed. There is no listing, no extension ID,
 and nothing in the Kōbō app that points a user at it. This is the path from
 here to installed-from-a-link.
