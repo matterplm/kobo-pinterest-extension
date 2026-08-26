@@ -27,14 +27,35 @@ window.__koboStyles = `
   --kobo-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --kobo-ease-spring: cubic-bezier(0.2, 0.8, 0.24, 1);
 
-  all: initial;
+  /* Only inherited properties cross a shadow boundary, so reset exactly those
+     rather than reaching for "all: initial", which resets font-family to the
+     initial value (a serif) and made the whole sheet render in Times.
+     NOTE: no backticks in this file — the whole sheet is a template literal. */
   font-family: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  font-style: normal;
+  font-variant: normal;
+  line-height: 1.5;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-align: left;
+  text-transform: none;
+  text-indent: 0;
+  text-shadow: none;
+  white-space: normal;
+  direction: ltr;
+  color: var(--kobo-text-primary);
 }
 
 * { box-sizing: border-box; }
 
 button, input, textarea, select {
-  font: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
   color: inherit;
   margin: 0;
 }
@@ -92,7 +113,7 @@ button, input, textarea, select {
 
 .sheet {
   width: 100%;
-  max-width: 480px;
+  max-width: 580px;
   max-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
@@ -112,7 +133,7 @@ button, input, textarea, select {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 18px 22px;
   border-bottom: 1px solid var(--kobo-border-light);
   background: var(--kobo-bg-secondary);
   flex-shrink: 0;
@@ -134,14 +155,14 @@ button, input, textarea, select {
 .header-icon svg { width: 17px; height: 17px; }
 
 .header-title {
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 700;
   color: var(--kobo-text-primary);
   letter-spacing: -0.01em;
 }
 
 .header-sub {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--kobo-text-muted);
   margin-top: 1px;
 }
@@ -164,11 +185,11 @@ button, input, textarea, select {
 .icon-btn svg { width: 16px; height: 16px; }
 
 .sheet-body {
-  padding: 16px 20px;
+  padding: 20px 22px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 
 /* --------------------------------------------------------- form parts ---- */
@@ -184,8 +205,8 @@ button, input, textarea, select {
 }
 
 .preview img {
-  width: 84px;
-  height: 84px;
+  width: 96px;
+  height: 96px;
   flex-shrink: 0;
   object-fit: cover;
   border-radius: var(--kobo-radius-md);
@@ -193,14 +214,14 @@ button, input, textarea, select {
   background: var(--kobo-bg-panel);
 }
 
-.preview-meta { min-width: 0; font-size: 11px; color: var(--kobo-text-muted); line-height: 1.5; }
+.preview-meta { min-width: 0; font-size: 12px; color: var(--kobo-text-muted); line-height: 1.5; }
 .preview-source { color: var(--kobo-text-secondary); font-weight: 600; }
 .preview-url { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 
 .field-label {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -213,12 +234,12 @@ button, input, textarea, select {
 .custom-input,
 .custom-select {
   width: 100%;
-  padding: 9px 11px;
+  padding: 11px 13px;
   border: 1px solid var(--kobo-border-light);
   border-radius: var(--kobo-radius-md);
   background: var(--kobo-bg-primary);
   color: var(--kobo-text-primary);
-  font-size: 13px;
+  font-size: 14px;
   transition: border-color 150ms var(--kobo-ease), box-shadow 150ms var(--kobo-ease);
 }
 
@@ -233,11 +254,11 @@ button, input, textarea, select {
 
 .custom-input.invalid { border-color: var(--kobo-error); }
 
-textarea.custom-input { resize: vertical; min-height: 58px; line-height: 1.5; }
+textarea.custom-input { resize: vertical; min-height: 70px; line-height: 1.5; }
 
 .field-error { font-size: 11px; color: var(--kobo-error); }
 
-.field-hint { font-size: 11px; color: var(--kobo-text-muted); }
+.field-hint { font-size: 11.5px; color: var(--kobo-text-muted); }
 
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -264,12 +285,12 @@ textarea.custom-input { resize: vertical; min-height: 58px; line-height: 1.5; }
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border: 1px solid var(--kobo-text-secondary);
   border-radius: var(--kobo-radius-full);
   background: var(--kobo-bg-warm);
   color: var(--kobo-text-primary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.6;
 }
@@ -292,7 +313,7 @@ textarea.custom-input { resize: vertical; min-height: 58px; line-height: 1.5; }
   border: none;
   outline: none;
   background: transparent;
-  font-size: 12px;
+  font-size: 13px;
   padding: 3px 0;
 }
 
@@ -355,7 +376,7 @@ textarea.custom-input { resize: vertical; min-height: 58px; line-height: 1.5; }
   background: var(--kobo-bg-secondary);
 }
 
-.switch-copy { font-size: 12px; color: var(--kobo-text-primary); font-weight: 600; }
+.switch-copy { font-size: 13px; color: var(--kobo-text-primary); font-weight: 600; }
 .switch-copy span { display: block; font-size: 11px; font-weight: 400; color: var(--kobo-text-muted); margin-top: 2px; }
 
 .switch { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
@@ -393,16 +414,16 @@ textarea.custom-input { resize: vertical; min-height: 58px; line-height: 1.5; }
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding: 13px 20px;
+  padding: 15px 22px;
   border-top: 1px solid var(--kobo-border-light);
   background: var(--kobo-bg-secondary);
   flex-shrink: 0;
 }
 
 .btn {
-  padding: 9px 18px;
+  padding: 10px 20px;
   border-radius: var(--kobo-radius-md);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   border: 1px solid transparent;
@@ -503,14 +524,15 @@ textarea.custom-input { resize: vertical; min-height: 58px; line-height: 1.5; }
 .picker-trigger {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   width: 100%;
-  padding: 7px 10px;
+  min-height: 44px;
+  padding: 8px 11px;
   border: 1px solid var(--kobo-border-light);
   border-radius: var(--kobo-radius-md);
   background: var(--kobo-bg-primary);
   color: var(--kobo-text-primary);
-  font-size: 13px;
+  font-size: 14px;
   text-align: left;
   cursor: pointer;
   transition: border-color 150ms var(--kobo-ease), box-shadow 150ms var(--kobo-ease);
@@ -632,6 +654,7 @@ textarea.custom-input { resize: vertical; min-height: 58px; line-height: 1.5; }
 /* The one remaining native select keeps the OS arrow; give it room. */
 select.custom-select {
   appearance: none;
+  min-height: 44px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6660' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 9px center;

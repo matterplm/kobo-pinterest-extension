@@ -202,6 +202,13 @@
     )].slice(0, 5);
   }
 
+  function cleanTitle(raw) {
+    const title = (raw || '').trim();
+    const match = title.match(/^(.{12,})\s+[|\u2013\u2014\u00b7-]\s+[^|\u2013\u2014\u00b7-]{2,40}$/);
+
+    return (match ? match[1] : title).trim();
+  }
+
   function reportSaved(data) {
     const link = appOrigin
       ? ` <a data-href="${escapeHtml(`${appOrigin}/inspiration-boards/${data.pin.board_id}`)}">View board</a>`
@@ -329,7 +336,7 @@
       const thumb = trigger.querySelector('.picker-thumb');
 
       if (!board) {
-        name.textContent = boards.length ? 'Choose a board' : 'No boards yet';
+        name.textContent = boards.length ? 'Choose a board' : 'No boards yet — click to create one';
         name.classList.add('placeholder');
         count.textContent = '';
 
@@ -463,6 +470,7 @@
       close,
       setBoards(next, preferredId) {
         boards = next;
+        if (!next.length) create.classList.add('active');
         selectedId = next.some(board => board.id === preferredId) ? preferredId : next[0]?.id ?? null;
         renderTrigger();
         renderList();
@@ -603,7 +611,7 @@
     titleInput.type = 'text';
     titleInput.placeholder = 'Give this pin a name';
     titleInput.maxLength = 255;
-    titleInput.value = (context.title || document.title || '').slice(0, 255);
+    titleInput.value = cleanTitle(context.title || document.title).slice(0, 255);
     const titleError = el('div', 'field-error hidden');
     titleField.append(titleInput, titleError);
     body.appendChild(titleField);
