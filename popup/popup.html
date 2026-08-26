@@ -1,159 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Kobo Pinterest Extension</title>
+  <title>Kōbō Inspiration</title>
+  <link rel="stylesheet" href="../lib/tokens.css">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="container">
-    <!-- Header with gradient background -->
-    <div class="header">
-      <div class="logo-wrapper">
-        <div class="logo-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <div class="brand">
-          <h1>Kobo</h1>
-          <span class="subtitle">Pinterest Saver</span>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="../assets/icons/icon-32.png" alt="" width="22" height="22">
+        <div>
+          <h1>Kōbō</h1>
+          <span class="brand-sub">Inspiration</span>
         </div>
       </div>
-    </div>
-    
-    <!-- Login Section -->
-    <div id="loginSection" class="section active">
-      <div class="welcome-message">
-        <h2>Welcome Back</h2>
-        <p>Sign in to start saving inspiration</p>
-      </div>
-      
-      <form id="loginForm" class="modern-form">
-        <div class="input-group">
-          <input 
-            type="email" 
-            id="email" 
-            placeholder=" "
-            required
-            class="modern-input"
-          >
-          <label for="email" class="floating-label">Email Address</label>
-          <div class="input-line"></div>
-        </div>
-        
-        <div class="input-group">
-          <input 
-            type="password" 
-            id="password" 
-            placeholder=" "
-            required
-            class="modern-input"
-          >
-          <label for="password" class="floating-label">Password</label>
-          <div class="input-line"></div>
-        </div>
-        
-        <button type="submit" class="primary-btn">
-          <span class="btn-text">Sign In</span>
-          <div class="btn-loader" style="display: none;">
-            <div class="spinner"></div>
-          </div>
-        </button>
-        
-        <div class="form-footer">
-          <a href="#" class="link">Forgot password?</a>
-          <span class="separator">•</span>
-          <a href="#" class="link">Create account</a>
-        </div>
-      </form>
-    </div>
-    
-    <!-- Status Section -->
-    <div id="statusSection" class="section" style="display: none;">
-      <div class="status-card">
-        <div class="status-header">
-          <div class="status-indicator">
-            <div class="pulse-dot"></div>
-            <span>Connected</span>
-          </div>
-          <button class="icon-btn" id="settingsBtn" title="Settings">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 1V6M12 18V23M4.22 4.22L7.76 7.76M16.24 16.24L19.78 19.78M1 12H6M18 12H23M4.22 19.78L7.76 16.24M16.24 7.76L19.78 4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-        
-        <div class="user-card">
-          <div class="user-avatar">
-            <span id="userInitial">U</span>
-          </div>
-          <div class="user-details">
-            <div class="user-name" id="userName">User</div>
-            <div class="user-email" id="userEmail">user@example.com</div>
-          </div>
-        </div>
-        
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value" id="savedCount">0</div>
-            <div class="stat-label">Saved Today</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="boardCount">0</div>
-            <div class="stat-label">Boards</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="quick-actions">
-        <h3>Quick Actions</h3>
-        <div class="action-buttons">
-          <button class="action-btn" id="captureBtn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            <span>Capture Area</span>
-          </button>
-          <button class="action-btn" id="boardsBtn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"/>
-              <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"/>
-              <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"/>
-              <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            <span>My Boards</span>
-          </button>
-        </div>
-      </div>
-      
-      <div class="instruction-card">
-        <div class="instruction-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" fill-opacity="0.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <div class="instruction-text">
-          <strong>Pro Tip:</strong> Hover over any image on the web and click the Kobo button to save it instantly!
-        </div>
-      </div>
-      
-      <button id="signOutBtn" class="secondary-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <button id="settingsBtn" class="icon-btn" type="button" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
-        <span>Sign Out</span>
       </button>
-    </div>
-    
-    <!-- Toast Message -->
+    </header>
+
+    <!-- ------------------------------------------------------- signed out -->
+    <section id="loginView" class="view hidden">
+      <div class="intro">
+        <h2>Sign in to Kōbō</h2>
+        <p>Pin images from anywhere on the web straight into your inspiration boards.</p>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label class="field-label" for="email">Email</label>
+          <input id="email" class="custom-input" type="email" autocomplete="username" required placeholder="you@brand.com">
+        </div>
+        <div class="field">
+          <label class="field-label" for="password">Password</label>
+          <input id="password" class="custom-input" type="password" autocomplete="current-password" required placeholder="••••••••">
+        </div>
+        <div id="loginError" class="form-error hidden"></div>
+        <button id="loginBtn" class="btn btn-primary btn-block" type="submit">Sign in</button>
+      </form>
+
+      <div class="intro-links">
+        <a id="forgotLink" href="#">Forgot password</a>
+        <span aria-hidden="true">·</span>
+        <a id="registerLink" href="#">Create an account</a>
+      </div>
+      <div id="envNotice" class="env-notice hidden"></div>
+    </section>
+
+    <!-- -------------------------------------------------------- signed in -->
+    <section id="mainView" class="view hidden">
+      <div class="account">
+        <div class="avatar" id="userInitial">K</div>
+        <div class="account-meta">
+          <div class="account-name" id="userName"></div>
+          <div class="account-sub" id="userCompany"></div>
+        </div>
+        <button id="signOutBtn" class="inline-link" type="button">Sign out</button>
+      </div>
+
+      <div id="brandRow" class="field hidden">
+        <label class="field-label" for="brandSelect">Pinning into brand</label>
+        <select id="brandSelect" class="custom-select"></select>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-value" id="savedToday">0</span>
+          <span class="stat-label">Saved today</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="totalPins">0</span>
+          <span class="stat-label">Total pins</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="totalBoards">0</span>
+          <span class="stat-label">Boards</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="pinPageBtn" class="action" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
+          <span>Pin this page</span>
+        </button>
+        <button id="captureBtn" class="action" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg>
+          <span>Capture area</span>
+        </button>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <h3>Your boards</h3>
+          <button id="openAppBtn" class="inline-link" type="button">Open in Kōbō</button>
+        </div>
+        <div id="boardList" class="board-list">
+          <div class="empty">Loading your boards…</div>
+        </div>
+      </div>
+    </section>
+
     <div id="toast" class="toast"></div>
   </div>
-  
-  <script src="popup.js"></script>
+
+  <script src="popup.js" type="module"></script>
 </body>
 </html>

@@ -1,259 +1,256 @@
-// Kobo Pinterest Extension - Service Worker
+// Kobo Inspiration extension — background service worker.
+//
+// This is the ONLY place that talks to the Kobo API. Content scripts and the
+// popup send messages here; fetches from an MV3 worker are exempt from CORS
+// under host_permissions, whereas a content-script fetch would be blocked.
 
-const KOBO_API_URL = 'https://phplaravel-1373325-5066620.cloudwaysapps.com/api';
+import * as api from '../lib/api.js';
+import * as session from '../lib/session.js';
+import { getSettings, getEnvironment } from '../lib/config.js';
 
-let koboSession = null;
+const CONTEXT_MENUS = {
+  pinImage: 'kobo-pin-image',
+  pinSelection: 'kobo-pin-selection',
+  pinPage: 'kobo-pin-page',
+};
 
-// Load saved session on startup
-chrome.storage.local.get(['koboSession'], (result) => {
-  if (result.koboSession) {
-    koboSession = result.koboSession;
-    console.log('Loaded saved session:', koboSession);
-  } else {
-    console.log('No saved session found');
-  }
+/* ------------------------------------------------------------- lifecycle -- */
+
+chrome.runtime.onInstalled.addListener(() => {
+  registerContextMenus();
+  syncBadge();
 });
 
-// Listen for messages from popup and content scripts
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'authenticate') {
-    authenticateUser(request.data)
-      .then(response => sendResponse(response))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-    return true; // Will respond asynchronously
-  }
-  
-  if (request.action === 'signOut') {
-    koboSession = null;
-    sendResponse({ success: true });
-  }
-  
-  if (request.action === 'saveToKobo') {
-    saveImageToKobo(request.data)
-      .then(response => sendResponse({ success: true, data: response }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-    return true; // Will respond asynchronously
-  }
-  
-  if (request.action === 'getSession') {
-    sendResponse({ session: koboSession });
-  }
-  
-  if (request.action === 'getStats') {
-    getStats()
-      .then(stats => sendResponse({ success: true, stats }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-    return true; // Will respond asynchronously
-  }
+chrome.runtime.onStartup.addListener(() => {
+  registerContextMenus();
+  syncBadge();
 });
 
-// Authenticate user with Kobo
-async function authenticateUser(credentials) {
-  try {
-    console.log('Attempting to authenticate with:', credentials.email);
-    
-    // Make login request to Kobo API
-    const response = await fetch(`${KOBO_API_URL}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        email: credentials.email,
-        password: credentials.password
-      })
+function registerContextMenus() {
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: CONTEXT_MENUS.pinImage,
+      title: 'Pin image to Kōbō',
+      contexts: ['image'],
     });
-    
-    const data = await response.json();
-    console.log('Auth response status:', response.status);
-    console.log('Auth response data:', data);
-    
-    if (!response.ok) {
-      console.error('Auth failed:', data);
-      throw new Error(data.message || data.error || 'Invalid credentials');
-    }
-    
-    // Store session - Kobo returns a user object with token
-    // The API returns: { access_token: "...", token_type: "Bearer", user: {...} }
-    koboSession = {
-      token: data.access_token || data.token || data.data?.token,
-      email: credentials.email,
-      userId: data.user?.id || data.data?.user?.id,
-      userName: data.user?.name || data.data?.user?.name,
-      user: data.user || data.data?.user,
-      selectedBrand: data.selectedBrand,
-      companyId: data.user?.company_id || data.company_id
-    };
-    
-    // Check if we got a token
-    if (!koboSession.token) {
-      console.error('No token in response:', data);
-      throw new Error('No authentication token received');
-    }
-    
-    // Save to storage
-    await chrome.storage.local.set({ koboSession });
-    console.log('Session saved successfully:', koboSession);
-    
-    return { 
-      success: true,
-      token: koboSession.token,
-      name: koboSession.userName
-    };
-  } catch (error) {
-    console.error('Authentication error:', error.message);
-    throw error;
-  }
+    chrome.contextMenus.create({
+      id: CONTEXT_MENUS.pinSelection,
+      title: 'Pin selection to Kōbō',
+      contexts: ['selection'],
+    });
+    chrome.contextMenus.create({
+      id: CONTEXT_MENUS.pinPage,
+      title: 'Pin this page to Kōbō',
+      contexts: ['page'],
+    });
+  });
 }
 
-// Function to save image to Kobo
-async function saveImageToKobo(data) {
-  console.log('saveImageToKobo called with:', data);
-  console.log('Current session:', koboSession);
-  
-  if (!koboSession || !koboSession.token) {
-    console.error('No session or token available');
-    throw new Error('Please sign in to Kobo first');
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (!tab?.id) return;
+
+  if (info.menuItemId === CONTEXT_MENUS.pinImage && info.srcUrl) {
+    openSheet(tab.id, { imageUrl: info.srcUrl, sourceUrl: info.pageUrl });
   }
-  
+
+  if (info.menuItemId === CONTEXT_MENUS.pinSelection) {
+    openSheet(tab.id, {
+      sourceUrl: info.pageUrl,
+      description: info.selectionText,
+      needsPageImage: true,
+    });
+  }
+
+  if (info.menuItemId === CONTEXT_MENUS.pinPage) {
+    openSheet(tab.id, { sourceUrl: info.pageUrl, captureDataUrl: await captureVisibleTab() });
+  }
+});
+
+chrome.commands?.onCommand.addListener(async command => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return;
+
+  if (command === 'capture-area') {
+    sendToTab(tab.id, { action: 'startAreaCapture' });
+  }
+
+  if (command === 'pin-page') {
+    const dataUrl = await captureVisibleTab();
+    openSheet(tab.id, { sourceUrl: tab.url, captureDataUrl: dataUrl });
+  }
+});
+
+// Tabs that were already open when the extension was installed or reloaded have
+// no content script, so sendMessage rejects with "Receiving end does not exist".
+// Inject on demand and retry rather than leaving the user with a menu item that
+// appears to do nothing.
+async function sendToTab(tabId, message) {
   try {
-    const requestBody = {
-      imageUrl: data.imageUrl,
-      title: data.title || 'Saved from web',
-      description: data.description,
-      pageUrl: data.pageUrl
-    };
-    
-    console.log('Sending request to:', `${KOBO_API_URL}/inspiration/save-pin`);
-    console.log('Request headers:', {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${koboSession.token}`,
-      'Accept': 'application/json'
-    });
-    console.log('Request body:', requestBody);
-    
-    // First try the new inspiration endpoint, fallback to moodboards if it doesn't exist
-    let response = await fetch(`${KOBO_API_URL}/inspiration/save-pin`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${koboSession.token}`,
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
-    
-    // If inspiration endpoint doesn't exist (404 or 401), try moodboards
-    if (response.status === 404 || response.status === 401) {
-      console.log('Inspiration endpoint not available, trying moodboards endpoint...');
-      
-      // Create canvas data for moodboards endpoint
-      const canvasData = {
-        version: "5.3.0",
-        objects: [{
-          type: "image",
-          version: "5.3.0",
-          originX: "left",
-          originY: "top",
-          left: 100,
-          top: 100,
-          width: 400,
-          height: 300,
-          scaleX: 1,
-          scaleY: 1,
-          angle: 0,
-          src: data.imageUrl,
-          crossOrigin: "anonymous"
-        }],
-        background: "#ffffff"
-      };
-      
-      response = await fetch(`${KOBO_API_URL}/moodboards`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${koboSession.token}`,
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          name: data.title || 'Pinterest Save - ' + new Date().toLocaleDateString(),
-          description: `Saved from: ${data.pageUrl}`,
-          canvas_data: JSON.stringify(canvasData),
-          thumbnail: data.imageUrl,
-          brand_id: koboSession.selectedBrand || koboSession.user?.selectedBrand || null,
-          company_id: koboSession.companyId || koboSession.user?.company_id || null
-        })
+    await chrome.tabs.sendMessage(tabId, message);
+  } catch {
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['content/styles.js', 'content/content-script.js'],
       });
+      await chrome.tabs.sendMessage(tabId, message);
+    } catch (error) {
+      console.warn('Kōbō: cannot reach this page', error);
     }
-    
-    console.log('Response status:', response.status);
-    
-    if (response.status === 401) {
-      // Session expired
-      console.error('401 Unauthorized - clearing session');
-      koboSession = null;
-      await chrome.storage.local.remove(['koboSession']);
-      throw new Error('Session expired. Please sign in again.');
-    }
-    
-    const result = await response.json();
-    console.log('Response data:', result);
-    
-    if (!response.ok) {
-      console.error('Save failed:', result);
-      throw new Error(result.message || 'Failed to save to Kobo');
-    }
-    
-    console.log('Save successful:', result);
-    return result;
-  } catch (error) {
-    console.error('Save error:', error);
-    throw error;
   }
 }
 
-// Get stats for the user
-async function getStats() {
-  if (!koboSession) {
-    return { savedToday: 0, totalBoards: 0 };
-  }
-  
-  try {
-    const response = await fetch(`${KOBO_API_URL}/inspiration/boards`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${koboSession.token}`,
-        'Accept': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch stats');
-    }
-    
-    const result = await response.json();
-    const boards = result.data || [];
-    
-    // Calculate saved today
-    const today = new Date().toDateString();
-    let savedToday = 0;
-    
-    boards.forEach(board => {
-      if (board.pins_count) {
-        // This is a simplified count - ideally we'd have a dedicated endpoint
-        savedToday += board.pins_count;
-      }
-    });
-    
-    return {
-      savedToday: savedToday,
-      totalBoards: boards.length
-    };
-  } catch (error) {
-    console.error('Failed to get stats:', error);
-    return { savedToday: 0, totalBoards: 0 };
-  }
+function openSheet(tabId, payload) {
+  sendToTab(tabId, { action: 'openSaveSheet', data: payload });
 }
 
-console.log('Kobo Pinterest Extension service worker loaded');
+async function captureVisibleTab() {
+  return chrome.tabs.captureVisibleTab(null, { format: 'png' });
+}
+
+/* --------------------------------------------------------------- routing -- */
+
+// Each handler receives the message payload and returns a value that becomes
+// `{ success: true, data }`. Throwing produces `{ success: false, error }`.
+const handlers = {
+  getSession: () => session.getSession(),
+
+  signIn: data => session.signIn(data),
+
+  signOut: () => session.signOut(),
+
+  getBoards: () => api.getBoards(),
+
+  setActiveBrand: ({ brandId }) => session.setActiveBrand(brandId),
+
+  createBoard: data => api.createBoard(data),
+
+  getCollections: ({ boardId }) => api.getBoardCollections(boardId),
+
+  savePin: data => savePin(data),
+
+  searchLinkables: async ({ type, query }) =>
+    type === 'component' ? api.searchComponents(query) : api.searchStyles(query),
+
+  getStats: async () => {
+    const [stats, savedToday] = await Promise.all([api.getStats(), session.getSavedToday()]);
+
+    return { ...(stats || {}), saved_today: savedToday };
+  },
+
+  getSettings: () => getSettings(),
+
+  getEnvironment: () => getEnvironment(),
+
+  captureVisibleTab: () => captureVisibleTab(),
+
+  // The popup can't safely sendMessage to a tab itself (the content script may
+  // not be there), so it delegates both of its tab actions here.
+  startAreaCapture: ({ tabId }) => sendToTab(tabId, { action: 'startAreaCapture' }),
+
+  pinVisibleTab: async ({ tabId, sourceUrl, title }) => {
+    openSheet(tabId, { captureDataUrl: await captureVisibleTab(), sourceUrl, title });
+  },
+};
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const handler = handlers[message?.action];
+
+  if (!handler) {
+    sendResponse({ success: false, error: `Unknown action: ${message?.action}` });
+
+    return false;
+  }
+
+  Promise.resolve(handler(message.data || {}, sender))
+    .then(data => sendResponse({ success: true, data }))
+    .catch(async error => {
+      if (error?.status === 401) {
+        await session.clearExpiredSession();
+        sendResponse({ success: false, error: 'Session expired. Please sign in again.', authExpired: true });
+
+        return;
+      }
+
+      sendResponse({ success: false, error: error?.message || 'Something went wrong' });
+    });
+
+  return true; // response is async
+});
+
+/* ------------------------------------------------------------------ save -- */
+
+async function savePin({
+  boardId,
+  collectionId,
+  title,
+  description,
+  imageUrl,
+  captureDataUrl,
+  sourceUrl,
+  tags,
+  links,
+  extractColours,
+}) {
+  let pin;
+
+  if (captureDataUrl) {
+    pin = await api.createPinFromBlob({
+      boardId,
+      title,
+      description,
+      sourceUrl,
+      tags,
+      blob: await dataUrlToBlob(captureDataUrl),
+    });
+  } else {
+    pin = await api.createPin({ boardId, title, description, imageUrl, sourceUrl, tags });
+  }
+
+  // Everything below is enrichment — a failure here shouldn't lose the pin, so
+  // each step is reported back rather than thrown.
+  const warnings = [];
+
+  if (collectionId) {
+    try {
+      await api.movePinToCollection(pin.id, collectionId);
+    } catch (error) {
+      warnings.push(`Saved, but couldn't file it in the collection: ${error.message}`);
+    }
+  }
+
+  for (const link of links || []) {
+    try {
+      await api.linkPin(pin.id, link);
+    } catch (error) {
+      warnings.push(`Saved, but couldn't link ${link.linkableType}: ${error.message}`);
+    }
+  }
+
+  if (extractColours) {
+    try {
+      await api.extractPinColours(pin.id);
+    } catch {
+      warnings.push('Saved, but colour extraction could not be queued.');
+    }
+  }
+
+  await session.recordSave();
+  await syncBadge();
+
+  return { pin, warnings };
+}
+
+async function dataUrlToBlob(dataUrl) {
+  const response = await fetch(dataUrl);
+
+  return response.blob();
+}
+
+// The badge counts today's saves. getSavedToday() is date-keyed, so this also
+// clears yesterday's number on the first wake-up of a new day.
+async function syncBadge() {
+  const count = await session.getSavedToday();
+  await chrome.action.setBadgeText({ text: count ? String(count) : '' });
+  await chrome.action.setBadgeBackgroundColor({ color: '#7c8471' });
+}

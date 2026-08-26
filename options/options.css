@@ -1,0 +1,138 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--kobo-font);
+  background: var(--kobo-bg-secondary);
+  color: var(--kobo-text-primary);
+  -webkit-font-smoothing: antialiased;
+  padding: 40px 24px;
+}
+
+.page { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+.page-head { display: flex; align-items: center; gap: 14px; }
+.page-head img { border-radius: var(--kobo-radius-md); }
+.page-head h1 { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+.page-head p { font-size: 12.5px; color: var(--kobo-text-secondary); margin-top: 2px; }
+
+.card {
+  background: var(--kobo-bg-primary);
+  border: 1px solid var(--kobo-border-light);
+  border-radius: var(--kobo-radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--kobo-shadow-sm);
+}
+
+.card h2 {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--kobo-text-secondary);
+  margin-bottom: 8px;
+}
+
+.card-note { font-size: 12.5px; color: var(--kobo-text-secondary); line-height: 1.55; }
+.card-note a { color: var(--kobo-text-primary); font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--kobo-border-light);
+}
+
+.setting:last-child { border-bottom: none; }
+
+.setting-copy { min-width: 0; }
+.setting-copy label { display: block; font-size: 13px; font-weight: 700; }
+.setting-copy p { font-size: 12px; color: var(--kobo-text-muted); margin-top: 3px; line-height: 1.5; }
+
+.custom-select {
+  flex-shrink: 0;
+  min-width: 210px;
+  padding: 8px 11px;
+  border: 1px solid var(--kobo-border-light);
+  border-radius: var(--kobo-radius-md);
+  background: var(--kobo-bg-primary);
+  color: var(--kobo-text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.custom-select:focus { outline: none; border-color: var(--kobo-text-secondary); box-shadow: 0 0 0 3px rgba(45, 41, 38, 0.06); }
+
+/* VSwitch equivalent — the house toggle, never a checkbox */
+.switch { position: relative; width: 40px; height: 23px; flex-shrink: 0; }
+.switch input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+
+.switch .track {
+  position: absolute; inset: 0;
+  border-radius: var(--kobo-radius-full);
+  background: var(--kobo-border-medium);
+  transition: background var(--kobo-transition-fast) var(--kobo-ease);
+  pointer-events: none;
+}
+
+.switch .thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--kobo-shadow-md);
+  transition: transform var(--kobo-transition-base) var(--kobo-ease-spring);
+  pointer-events: none;
+}
+
+.switch input:checked ~ .track { background: var(--kobo-accent-sage); }
+.switch input:checked ~ .thumb { transform: translateX(17px); }
+.switch input:disabled ~ .track { opacity: 0.45; }
+
+.notice {
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--kobo-text-primary);
+  background: var(--kobo-warning-bg);
+  border: 1px solid var(--kobo-warning);
+  border-radius: var(--kobo-radius-md);
+}
+
+.hidden { display: none !important; }
+
+.shortcuts { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
+
+.shortcuts div { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.shortcuts dt { font-size: 12.5px; color: var(--kobo-text-primary); }
+
+.shortcuts dd {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border: 1px solid var(--kobo-text-secondary);
+  border-radius: var(--kobo-radius-full);
+  background: var(--kobo-bg-warm);
+  color: var(--kobo-text-primary);
+  white-space: nowrap;
+}
+
+.shortcuts dd.unset { border-color: var(--kobo-border-medium); background: var(--kobo-bg-panel); color: var(--kobo-text-muted); }
+
+.page-foot { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: var(--kobo-text-muted); }
+
+.saved-note {
+  font-weight: 700;
+  color: var(--kobo-accent-sage);
+  opacity: 0;
+  transition: opacity var(--kobo-transition-fast) var(--kobo-ease);
+}
+
+.saved-note.show { opacity: 1; }

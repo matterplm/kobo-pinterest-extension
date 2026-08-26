@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kōbō Inspiration — Settings</title>
+  <link rel="stylesheet" href="../lib/tokens.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="page">
+    <header class="page-head">
+      <img src="../assets/icons/icon-48.png" alt="" width="34" height="34">
+      <div>
+        <h1>Kōbō Inspiration</h1>
+        <p>Settings for the browser extension</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>Saving</h2>
+
+      <div class="setting">
+        <div class="setting-copy">
+          <label for="defaultBoard">Default board</label>
+          <p>Pre-selected when the save sheet opens, and the target for one-click saves.</p>
+        </div>
+        <select id="defaultBoard" class="custom-select">
+          <option value="">Most recent board</option>
+        </select>
+      </div>
+
+      <div class="setting">
+        <div class="setting-copy">
+          <label for="showQuickPinButton">Show the hover button on images</label>
+          <p>A “Save to Kōbō” button appears on images larger than 140&nbsp;px as you browse.</p>
+        </div>
+        <label class="switch">
+          <input id="showQuickPinButton" type="checkbox">
+          <span class="track"></span><span class="thumb"></span>
+        </label>
+      </div>
+
+      <div class="setting">
+        <div class="setting-copy">
+          <label for="quickPinSkipsSheet">One-click save</label>
+          <p>Skip the save sheet and pin straight to the default board. Requires a default board.</p>
+        </div>
+        <label class="switch">
+          <input id="quickPinSkipsSheet" type="checkbox">
+          <span class="track"></span><span class="thumb"></span>
+        </label>
+      </div>
+
+      <div class="setting">
+        <div class="setting-copy">
+          <label for="autoTag">Suggest tags</label>
+          <p>Pre-fill tags from the page’s own keyword metadata. You can edit them before saving.</p>
+        </div>
+        <label class="switch">
+          <input id="autoTag" type="checkbox">
+          <span class="track"></span><span class="thumb"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Connection</h2>
+
+      <div class="setting">
+        <div class="setting-copy">
+          <label for="environment">Kōbō environment</label>
+          <p>Leave this on Production unless you are testing against staging or a local server.</p>
+        </div>
+        <select id="environment" class="custom-select"></select>
+      </div>
+
+      <div id="envWarning" class="notice hidden">
+        Changing the environment signs you out — each environment has its own account and boards.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Keyboard shortcuts</h2>
+      <p class="card-note">
+        Chrome owns these bindings. Change them at
+        <a id="shortcutsLink" href="#">chrome://extensions/shortcuts</a>.
+      </p>
+      <dl class="shortcuts" id="shortcutList"></dl>
+    </section>
+
+    <footer class="page-foot">
+      <span id="savedNote" class="saved-note"></span>
+      <span class="version" id="version"></span>
+    </footer>
+  </main>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>

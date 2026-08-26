@@ -1,299 +1,274 @@
-// Kobo Pinterest Extension - Modern Popup Script
+import { getSettings, ENVIRONMENTS, DEFAULT_ENVIRONMENT } from '../lib/config.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const loginForm = document.getElementById('loginForm');
-  const loginSection = document.getElementById('loginSection');
-  const statusSection = document.getElementById('statusSection');
-  const signOutBtn = document.getElementById('signOutBtn');
-  const userEmailSpan = document.getElementById('userEmail');
-  const userNameSpan = document.getElementById('userName');
-  const userInitialSpan = document.getElementById('userInitial');
-  const savedCountSpan = document.getElementById('savedCount');
-  const boardCountSpan = document.getElementById('boardCount');
-  const captureBtn = document.getElementById('captureBtn');
-  const boardsBtn = document.getElementById('boardsBtn');
-  const settingsBtn = document.getElementById('settingsBtn');
-  const toastDiv = document.getElementById('toast');
-  
-  // Check if already logged in
-  const session = await chrome.storage.local.get(['koboSession', 'stats']);
-  
-  if (session.koboSession && session.koboSession.token) {
-    // Already logged in
-    showLoggedInState(session.koboSession);
-    updateStats(session.stats);
-  } else {
-    // Need to log in
-    showLoginState();
-  }
-  
-  // Handle login form submission with modern animations
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const submitBtn = loginForm.querySelector('.primary-btn');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoader = submitBtn.querySelector('.btn-loader');
-    
-    // Show loading state
-    btnText.style.display = 'none';
-    btnLoader.style.display = 'block';
-    submitBtn.disabled = true;
-    
-    try {
-      // Authenticate with Kobo
-      chrome.runtime.sendMessage({
-        action: 'authenticate',
-        data: {
-          email,
-          password
-        }
-      }, (response) => {
-        // Reset button state
-        btnText.style.display = 'block';
-        btnLoader.style.display = 'none';
-        submitBtn.disabled = false;
-        
-        // Check for Chrome runtime errors
-        if (chrome.runtime.lastError) {
-          console.error('Chrome runtime error:', chrome.runtime.lastError);
-          showToast('Extension error. Please reload the extension.', 'error');
-          return;
-        }
-        
-        // Check if response exists
-        if (!response) {
-          showToast('No response from extension. Please reload and try again.', 'error');
-          return;
-        }
-        
-        // Handle the response
-        if (response.success) {
-          const userData = {
-            email: email,
-            name: response.name || email.split('@')[0],
-            token: response.token
-          };
-          
-          showToast('Welcome back!', 'success');
-          animateTransition(() => {
-            showLoggedInState(userData);
-          });
-        } else {
-          showToast(response.error || 'Invalid credentials', 'error');
-          shakeForm();
-        }
-      });
-    } catch (error) {
-      console.error('Login error:', error);
-      btnText.style.display = 'block';
-      btnLoader.style.display = 'none';
-      submitBtn.disabled = false;
-      showToast('An error occurred. Please try again.', 'error');
-    }
-  });
-  
-  // Handle sign out
-  signOutBtn.addEventListener('click', async () => {
-    await chrome.storage.local.remove(['koboSession', 'stats']);
-    
-    // Notify service worker
-    chrome.runtime.sendMessage({ action: 'signOut' }, (response) => {
+const $ = id => document.getElementById(id);
+
+let appOrigin = ENVIRONMENTS[DEFAULT_ENVIRONMENT].app;
+
+function send(action, data) {
+  return new Promise(resolve => {
+    chrome.runtime.sendMessage({ action, data }, response => {
       if (chrome.runtime.lastError) {
-        console.error('Chrome runtime error:', chrome.runtime.lastError);
+        resolve({ success: false, error: 'Reload the extension and try again.' });
+
+        return;
       }
-    });
-    
-    showToast('Signed out successfully', 'success');
-    
-    animateTransition(() => {
-      showLoginState();
-      // Clear password field for security
-      document.getElementById('password').value = '';
-      document.getElementById('email').value = '';
+      resolve(response || { success: false, error: 'No response from the extension.' });
     });
   });
-  
-  // Handle quick actions
-  captureBtn?.addEventListener('click', async () => {
-    captureBtn.classList.add('clicked');
-    setTimeout(() => captureBtn.classList.remove('clicked'), 300);
-    
-    // Send message to content script to start capture
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    chrome.tabs.sendMessage(tab.id, { action: 'startCapture' });
-    window.close();
-  });
-  
-  boardsBtn?.addEventListener('click', async () => {
-    boardsBtn.classList.add('clicked');
-    setTimeout(() => boardsBtn.classList.remove('clicked'), 300);
-    
-    // Open boards page
-    chrome.tabs.create({ url: 'http://localhost:8000/inspiration-boards' });
-    window.close();
-  });
-  
-  settingsBtn?.addEventListener('click', () => {
-    settingsBtn.classList.add('rotate');
-    setTimeout(() => settingsBtn.classList.remove('rotate'), 600);
-    
-    // Open settings
-    chrome.runtime.openOptionsPage();
-  });
-  
-  // Handle form interactions
-  const inputs = document.querySelectorAll('.modern-input');
-  inputs.forEach(input => {
-    input.addEventListener('focus', () => {
-      input.parentElement.classList.add('focused');
-    });
-    
-    input.addEventListener('blur', () => {
-      if (!input.value) {
-        input.parentElement.classList.remove('focused');
-      }
-    });
-  });
-  
-  // Handle forgot password and create account links
-  document.querySelectorAll('.link').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const action = link.textContent.toLowerCase();
-      
-      if (action.includes('forgot')) {
-        chrome.tabs.create({ url: 'http://localhost:8000/password/reset' });
-      } else if (action.includes('create')) {
-        chrome.tabs.create({ url: 'http://localhost:8000/register' });
-      }
-      
+}
+
+function toast(message, type = 'info') {
+  const node = $('toast');
+  node.textContent = message;
+  node.className = `toast ${type} show`;
+
+  setTimeout(() => (node.className = 'toast'), 3200);
+}
+
+function show(view) {
+  $('loginView').classList.toggle('hidden', view !== 'login');
+  $('mainView').classList.toggle('hidden', view !== 'main');
+}
+
+/* ------------------------------------------------------------------ init -- */
+
+async function init() {
+  const settings = await getSettings();
+  appOrigin = (ENVIRONMENTS[settings.environment] || ENVIRONMENTS[DEFAULT_ENVIRONMENT]).app;
+
+  // A non-production API is easy to forget about and produces baffling
+  // "where did my pins go" moments — say so plainly on the sign-in screen.
+  if (settings.environment !== DEFAULT_ENVIRONMENT) {
+    const notice = $('envNotice');
+    notice.textContent = `Connected to ${ENVIRONMENTS[settings.environment]?.label || settings.environment}`;
+    notice.classList.remove('hidden');
+  }
+
+  const session = await send('getSession');
+
+  if (session.success && session.data?.token) {
+    renderAccount(session.data);
+    show('main');
+    loadStats();
+    loadBoards();
+  } else {
+    show('login');
+  }
+}
+
+function renderAccount(session) {
+  const name = session.name || session.email?.split('@')[0] || 'Kōbō user';
+  $('userName').textContent = name;
+  $('userCompany').textContent = session.companyName || session.email || '';
+  $('userInitial').textContent = name.charAt(0).toUpperCase();
+
+  renderBrandPicker(session);
+}
+
+// Only worth showing to multi-brand users — a single-brand account has no
+// choice to make, and the row would just be noise.
+function renderBrandPicker(session) {
+  const brands = session.brands || [];
+  const row = $('brandRow');
+
+  if (brands.length < 2) {
+    row.classList.add('hidden');
+
+    return;
+  }
+
+  const select = $('brandSelect');
+  select.innerHTML = brands
+    .map(brand => `<option value="${brand.id}">${brand.name}</option>`)
+    .join('');
+
+  const active = session.activeBrandId ?? session.selectedBrandId;
+  if (active) select.value = String(active);
+
+  row.classList.remove('hidden');
+
+  select.onchange = async () => {
+    const response = await send('setActiveBrand', { brandId: Number(select.value) });
+
+    if (!response.success) {
+      toast(response.error, 'error');
+
+      return;
+    }
+
+    toast(`Now pinning into ${select.selectedOptions[0].textContent}`, 'success');
+    loadBoards();
+  };
+}
+
+async function loadStats() {
+  const response = await send('getStats');
+  if (!response.success) return;
+
+  const stats = response.data || {};
+  $('savedToday').textContent = stats.saved_today ?? 0;
+  $('totalPins').textContent = stats.total_pins ?? 0;
+  $('totalBoards').textContent = stats.total_boards ?? 0;
+}
+
+async function loadBoards() {
+  const list = $('boardList');
+  const response = await send('getBoards');
+
+  if (!response.success) {
+    list.innerHTML = `<div class="empty">${response.error}</div>`;
+
+    return;
+  }
+
+  const boards = response.data || [];
+
+  if (!boards.length) {
+    list.innerHTML = '<div class="empty">No boards yet. Create your first one in Kōbō, or from the save sheet when you pin an image.</div>';
+
+    return;
+  }
+
+  list.innerHTML = '';
+  boards.forEach(board => {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'board';
+
+    const cover = document.createElement('img');
+    cover.className = 'board-cover';
+    cover.alt = '';
+    if (board.cover_image) cover.src = board.cover_image;
+
+    const meta = document.createElement('div');
+    meta.className = 'board-meta';
+
+    const name = document.createElement('div');
+    name.className = 'board-name';
+    name.textContent = board.name;
+
+    const count = document.createElement('div');
+    count.className = 'board-count';
+    count.textContent = `${board.pins_count ?? 0} pin${board.pins_count === 1 ? '' : 's'}`;
+
+    meta.append(name, count);
+    row.append(cover, meta);
+
+    if (board.visibility && board.visibility !== 'private') {
+      const badge = document.createElement('span');
+      badge.className = 'board-badge';
+      badge.textContent = board.visibility;
+      row.appendChild(badge);
+    }
+
+    row.addEventListener('click', () => {
+      chrome.tabs.create({ url: `${appOrigin}/inspiration-boards/${board.id}` });
       window.close();
     });
+
+    list.appendChild(row);
   });
-  
-  function showLoginState() {
-    loginSection.classList.add('active');
-    statusSection.style.display = 'none';
+}
+
+/* --------------------------------------------------------------- actions -- */
+
+$('loginForm').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const button = $('loginBtn');
+  const error = $('loginError');
+  error.classList.add('hidden');
+
+  const email = $('email').value.trim();
+  const password = $('password').value;
+
+  if (!email || !password) {
+    error.textContent = 'Enter your email and password.';
+    error.classList.remove('hidden');
+
+    return;
   }
-  
-  function showLoggedInState(userData) {
-    loginSection.classList.remove('active');
-    statusSection.style.display = 'block';
-    
-    // Update user info
-    const name = userData.name || userData.email.split('@')[0];
-    const initial = name.charAt(0).toUpperCase();
-    
-    userEmailSpan.textContent = userData.email;
-    userNameSpan.textContent = name;
-    userInitialSpan.textContent = initial;
-    
-    // Fetch and update stats
-    fetchStats();
+
+  button.disabled = true;
+  button.textContent = 'Signing in…';
+
+  const response = await send('signIn', { email, password });
+
+  button.disabled = false;
+  button.textContent = 'Sign in';
+
+  if (!response.success) {
+    error.textContent = response.error;
+    error.classList.remove('hidden');
+
+    return;
   }
-  
-  function updateStats(stats) {
-    if (!stats) {
-      stats = { savedToday: 0, totalBoards: 0 };
-    }
-    
-    // Animate counter updates
-    animateCounter(savedCountSpan, stats.savedToday || 0);
-    animateCounter(boardCountSpan, stats.totalBoards || 0);
-  }
-  
-  async function fetchStats() {
-    chrome.runtime.sendMessage({ action: 'getStats' }, (response) => {
-      if (response && response.success) {
-        updateStats(response.stats);
-      }
-    });
-  }
-  
-  function animateCounter(element, target) {
-    const current = parseInt(element.textContent) || 0;
-    const increment = Math.ceil((target - current) / 20);
-    let value = current;
-    
-    const timer = setInterval(() => {
-      value += increment;
-      if ((increment > 0 && value >= target) || (increment < 0 && value <= target)) {
-        value = target;
-        clearInterval(timer);
-      }
-      element.textContent = value;
-    }, 30);
-  }
-  
-  function showToast(message, type = 'info') {
-    toastDiv.textContent = message;
-    toastDiv.className = `toast ${type} show`;
-    
-    setTimeout(() => {
-      toastDiv.classList.add('fade-out');
-      setTimeout(() => {
-        toastDiv.className = 'toast';
-      }, 300);
-    }, 3000);
-  }
-  
-  function animateTransition(callback) {
-    const container = document.querySelector('.container');
-    container.style.opacity = '0';
-    container.style.transform = 'scale(0.95)';
-    
-    setTimeout(() => {
-      callback();
-      container.style.opacity = '1';
-      container.style.transform = 'scale(1)';
-    }, 300);
-  }
-  
-  function shakeForm() {
-    const form = document.querySelector('.modern-form');
-    form.classList.add('shake');
-    setTimeout(() => form.classList.remove('shake'), 500);
-  }
-  
-  // Add shake animation to CSS
-  const style = document.createElement('style');
-  style.textContent = `
-    .shake {
-      animation: shake 0.5s ease-in-out;
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-      20%, 40%, 60%, 80% { transform: translateX(4px); }
-    }
-    .clicked {
-      animation: click 0.3s ease;
-    }
-    @keyframes click {
-      0% { transform: scale(1); }
-      50% { transform: scale(0.95); }
-      100% { transform: scale(1); }
-    }
-    .rotate {
-      animation: rotate 0.6s ease;
-    }
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .container {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-  `;
-  document.head.appendChild(style);
-  
-  // Listen for stats updates from background
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'statsUpdated') {
-      updateStats(request.stats);
-    }
-  });
+
+  $('password').value = '';
+  renderAccount(response.data);
+  show('main');
+  loadStats();
+  loadBoards();
 });
+
+$('signOutBtn').addEventListener('click', async () => {
+  await send('signOut');
+  $('email').value = '';
+  $('password').value = '';
+  show('login');
+  toast('Signed out');
+});
+
+$('settingsBtn').addEventListener('click', () => chrome.runtime.openOptionsPage());
+
+$('openAppBtn').addEventListener('click', () => {
+  chrome.tabs.create({ url: `${appOrigin}/inspiration-boards` });
+  window.close();
+});
+
+$('forgotLink').addEventListener('click', event => {
+  event.preventDefault();
+  chrome.tabs.create({ url: `${appOrigin}/forget-password` });
+});
+
+$('registerLink').addEventListener('click', event => {
+  event.preventDefault();
+  chrome.tabs.create({ url: `${appOrigin}/register` });
+});
+
+// The popup can't inject into restricted pages (chrome://, the Web Store,
+// PDFs), so say why rather than failing silently.
+async function withActiveTab(callback) {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  if (!tab?.id || !/^https?:/.test(tab.url || '')) {
+    toast('Kōbō can’t capture from this page.', 'error');
+
+    return;
+  }
+
+  callback(tab);
+}
+
+$('captureBtn').addEventListener('click', () =>
+  withActiveTab(async tab => {
+    await send('startAreaCapture', { tabId: tab.id });
+    window.close();
+  }),
+);
+
+$('pinPageBtn').addEventListener('click', () =>
+  withActiveTab(async tab => {
+    const response = await send('pinVisibleTab', { tabId: tab.id, sourceUrl: tab.url, title: tab.title });
+
+    if (!response.success) {
+      toast(response.error, 'error');
+
+      return;
+    }
+
+    window.close();
+  }),
+);
+
+init();

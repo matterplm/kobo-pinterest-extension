@@ -1,0 +1,77 @@
+/*
+ * Kobo design tokens — mirrored from client/assets/styles/_design-tokens.scss
+ * and _typography.scss. Keep these in sync by hand: the extension can't import
+ * the app's SCSS, so this file is the single place the app's palette enters the
+ * extension. Never invent a colour here — copy the token.
+ */
+:root {
+  /* Brand */
+  --kobo-primary: #a1a09c;
+  --kobo-primary-light: #b1b0ac;
+  --kobo-primary-dark: #8a919d;
+  --kobo-primary-contrast: #131313;
+
+  /* Accents */
+  --kobo-accent-sage: #7c8471;
+  --kobo-accent-gold: #d4a574;
+  --kobo-accent-terracotta: #a67b5b;
+
+  /* Status */
+  --kobo-success: #8fa68e;
+  --kobo-success-bg: rgba(143, 166, 142, 0.12);
+  --kobo-warning: #c9a876;
+  --kobo-warning-bg: rgba(201, 168, 118, 0.12);
+  --kobo-error: #b88b8b;
+  --kobo-error-bg: rgba(184, 139, 139, 0.12);
+  --kobo-info: #9d9a92;
+  --kobo-info-bg: rgba(157, 154, 146, 0.12);
+
+  /* Text */
+  --kobo-text-primary: #2d2926;
+  --kobo-text-secondary: #6b6660;
+  --kobo-text-muted: #a39b93;
+  --kobo-text-disabled: rgba(45, 41, 38, 0.4);
+
+  /* Surfaces */
+  --kobo-bg-primary: #ffffff;
+  --kobo-bg-secondary: #fbfbf9;
+  --kobo-bg-tertiary: #fafafa;
+  --kobo-bg-panel: #f5f5f5;
+  --kobo-bg-warm: #eae8e5;
+  --kobo-bg-overlay: rgba(46, 38, 61, 0.5);
+
+  /* Borders */
+  --kobo-border-light: #e0e0e0;
+  --kobo-border-medium: #bdbdbd;
+  --kobo-border-dark: #9e9e9e;
+
+  /* Radius */
+  --kobo-radius-sm: 4px;
+  --kobo-radius-md: 6px;
+  --kobo-radius-lg: 8px;
+  --kobo-radius-xl: 12px;
+  --kobo-radius-full: 9999px;
+
+  /* Warm shadows — the house elevation set */
+  --kobo-shadow-sm: 0 1px 2px rgba(45, 41, 38, 0.04), 0 1px 3px rgba(45, 41, 38, 0.03);
+  --kobo-shadow-md: 0 2px 4px rgba(45, 41, 38, 0.04), 0 6px 12px -3px rgba(45, 41, 38, 0.06);
+  --kobo-shadow-lg: 0 2px 4px rgba(45, 41, 38, 0.04), 0 10px 20px -6px rgba(45, 41, 38, 0.08), 0 20px 36px -12px rgba(45, 41, 38, 0.07);
+  --kobo-focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px rgba(45, 41, 38, 0.32);
+
+  /* Spacing (4px base) */
+  --kobo-space-1: 4px;
+  --kobo-space-2: 8px;
+  --kobo-space-3: 12px;
+  --kobo-space-4: 16px;
+  --kobo-space-5: 20px;
+  --kobo-space-6: 24px;
+
+  /* Motion */
+  --kobo-transition-fast: 150ms;
+  --kobo-transition-base: 250ms;
+  --kobo-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --kobo-ease-spring: cubic-bezier(0.2, 0.8, 0.24, 1);
+
+  /* Type */
+  --kobo-font: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}

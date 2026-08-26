@@ -1,32 +1,83 @@
 {
   "manifest_version": 3,
-  "name": "Kobo Pinterest Extension",
-  "version": "1.0.0",
-  "description": "Save Pinterest inspiration to your Kobo PLM",
-  
+  "name": "K\u014db\u014d Inspiration",
+  "version": "2.0.0",
+  "description": "Pin images, screenshots and colour from anywhere on the web straight into your K\u014db\u014d inspiration boards.",
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "contextMenus"
   ],
-  
   "host_permissions": [
     "<all_urls>"
   ],
-  
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
   "action": {
-    "default_popup": "popup/popup.html"
+    "default_popup": "popup/popup.html",
+    "default_title": "K\u014db\u014d Inspiration",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    }
   },
-  
+  "options_page": "options/options.html",
   "background": {
-    "service_worker": "background/service-worker.js"
+    "service_worker": "background/service-worker.js",
+    "type": "module"
   },
-  
-  "content_scripts": [{
-    "matches": ["https://*/*", "http://*/*"],
-    "js": ["content/content-script.js"],
-    "css": ["assets/styles/content.css"],
-    "run_at": "document_idle",
-    "all_frames": false
-  }]
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ],
+      "js": [
+        "content/styles.js",
+        "content/content-script.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Open K\u014db\u014d Inspiration"
+    },
+    "capture-area": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
+      },
+      "description": "Capture an area of the page"
+    },
+    "pin-page": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Pin a screenshot of this page"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/icons/*.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }

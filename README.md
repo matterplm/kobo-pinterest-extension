@@ -1,275 +1,97 @@
-# Kobo Inspiration Board Chrome Extension
+# Kōbō Inspiration — browser extension
 
-A Pinterest-like Chrome extension for Kobo PLM that allows users to capture inspiration from anywhere on the web and organize it into mood boards linked directly to their styles, components, and suppliers.
+Pin images, screenshots and page captures from anywhere on the web straight into
+your Kōbō inspiration boards, with the board, collection, tags and style/component
+links set at save time.
 
-## Features
+## What it does
 
-### 🎯 Core Functionality
-- **Quick Capture**: Right-click any image to pin it to your Kobo boards
-- **Area Selection**: Capture specific areas of any webpage
-- **Text Snippets**: Save important text with formatting preserved
-- **Color Extraction**: Extract and save color palettes from any webpage
-- **Smart Context**: Automatically captures metadata, alt text, and surrounding content
+**Capture**
+- Hover any image over 140 px and a **Save to Kōbō** button appears.
+- Right-click → *Pin image to Kōbō*, *Pin selection to Kōbō*, *Pin this page to Kōbō*.
+- Drag-select any region of a page (`Ctrl/Cmd+Shift+E`) and pin the crop.
+- Screenshot the whole visible page (`Ctrl/Cmd+Shift+Y`).
 
-### 📋 Board Management
-- Create and organize inspiration boards by category
-- Link boards to Kobo styles, components, and suppliers
-- Collaborate with team members on shared boards
-- Private, team, and public visibility options
+**Save sheet** — the in-page dialog that opens on capture:
+- Board picker, with inline board creation.
+- Collection picker for the chosen board.
+- Title (required) and notes, pre-filled from the image's alt text and the page title.
+- Tags, optionally pre-filled from the page's own keyword metadata.
+- Link the pin to one or more **styles** or **components** by search.
+- Optional colour-palette extraction.
 
-### 🔗 Kobo Integration
-- Seamless authentication with your Kobo account
-- Direct linking to styles, components, and suppliers
-- Convert pins to style attachments
-- Search and link Kobo items while pinning
+**Popup**
+- Sign in, and a live count of saves today / total pins / boards.
+- Your boards, click through to open one in Kōbō.
+- Brand switcher for multi-brand accounts — pins land in the brand you pick here.
+- Quick actions for page screenshot and area capture.
 
-### 🎨 Advanced Features
-- Floating sidebar for browsing boards while researching
-- Quick pin button on image hover
-- Auto-tagging and keyword extraction
-- Bulk operations for organizing pins
+**Settings** (`options/`)
+- Default board, and an optional one-click save that skips the sheet entirely.
+- Toggle the hover button and tag suggestions.
+- Switch between Production / Staging / Local API targets.
+- Read-only view of the current keyboard shortcuts.
 
-## Installation
+## Install (development)
 
-### Development Setup
+There is **no build step** — Chrome loads the source directly.
 
-1. Clone the repository:
-```bash
-git clone https://github.com/kobo-plm/kobo-pinterest-extension.git
-cd kobo-pinterest-extension
-```
+1. `chrome://extensions` → enable **Developer mode**.
+2. **Load unpacked** → select this directory.
+3. Click the Kōbō icon and sign in with your Kōbō credentials.
 
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Load the extension in Chrome:
-   - Open Chrome and navigate to `chrome://extensions`
-   - Enable "Developer mode"
-   - Click "Load unpacked"
-   - Select the `kobo-pinterest-extension` directory
-
-### Production Installation
-
-The extension will be available on the Chrome Web Store (coming soon).
-
-## Usage
-
-### Getting Started
-
-1. **Sign In**: Click the extension icon and sign in with your Kobo credentials
-2. **Create a Board**: Create your first inspiration board or select an existing one
-3. **Start Pinning**: Browse any website and right-click images to pin them
-
-### Capture Methods
-
-#### Right-Click Context Menu
-- Right-click any image → "Pin Image to Kobo Board"
-- Select text → "Pin Selection to Kobo Board"
-- Right-click page → "Pin Page to Kobo Board"
-
-#### Extension Popup
-- Click extension icon for quick actions
-- Capture area, screenshot, or extract colors
-- Access recent boards and pins
-
-#### Quick Pin Button
-- Hover over images to see the quick pin button
-- One-click to save with auto-selected board
-
-#### Keyboard Shortcuts
-- `Ctrl+Shift+K`: Open popup
-- `Ctrl+Shift+S`: Toggle sidebar
-- `Ctrl+Shift+C`: Start area capture
-
-### Organizing Pins
-
-1. **Tags**: Add tags for easy searching and filtering
-2. **Notes**: Add context and descriptions to pins
-3. **Linking**: Connect pins to Kobo styles, components, or suppliers
-4. **Positioning**: Drag and drop pins on board canvas
-
-## Backend Setup
-
-### Laravel API Endpoints
-
-The extension requires the following API endpoints on your Kobo server:
-
-```php
-// Routes in routes/api.php
-Route::prefix('inspiration')->group(function () {
-    Route::get('boards', 'InspirationController@getBoards');
-    Route::post('boards', 'InspirationController@createBoard');
-    Route::get('boards/{id}', 'InspirationController@getBoard');
-    Route::put('boards/{id}', 'InspirationController@updateBoard');
-    Route::delete('boards/{id}', 'InspirationController@deleteBoard');
-    
-    Route::get('pins', 'InspirationController@getPins');
-    Route::post('pins', 'InspirationController@createPin');
-    Route::get('pins/{id}', 'InspirationController@getPin');
-    Route::put('pins/{id}', 'InspirationController@updatePin');
-    Route::delete('pins/{id}', 'InspirationController@deletePin');
-    Route::post('pins/{id}/link', 'InspirationController@linkPin');
-});
-```
-
-### Database Migrations
-
-Run the migrations to create the necessary tables:
+Before packaging or after any edit:
 
 ```bash
-php artisan migrate
+npm run check      # manifest references, JS syntax, no hardcoded hosts
+npm run package    # zips the loadable extension
 ```
 
-This creates:
-- `inspiration_boards` - Stores board information
-- `inspiration_pins` - Stores individual pins
-- `pin_links` - Links pins to Kobo entities
-
-## Configuration
-
-### Extension Options
-
-Access options by clicking the settings icon in the popup:
-
-- **Default Board**: Set your default board for quick pinning
-- **Auto-Tag**: Enable automatic tag generation
-- **Color Extraction**: Enable automatic color palette extraction
-- **Notifications**: Configure notification preferences
-
-### API Configuration
-
-Update `background/api-client.js` to point to your Kobo instance:
-
-```javascript
-this.baseURL = 'https://your-kobo-instance.com/api';
-```
-
-## Development
-
-### Project Structure
+## Architecture
 
 ```
-kobo-pinterest-extension/
-├── manifest.json           # Extension manifest
-├── background/            # Service worker and API client
-├── content/              # Content scripts for webpage interaction
-├── popup/               # Extension popup interface
-├── options/            # Settings page
-├── sidebar/           # Floating sidebar component
-├── assets/           # Icons and styles
-└── lib/             # Shared utilities
+manifest.json            MV3 manifest — module service worker
+lib/config.js            environments + persisted settings. The ONLY place hosts live.
+lib/api.js               every Kōbō endpoint the extension uses
+lib/session.js           token storage, brand switching, saved-today counter
+lib/tokens.css           app design tokens, mirrored from the client's _design-tokens.scss
+background/              service worker: auth, context menus, commands, all network I/O
+content/styles.js        shadow-root stylesheet (a string — manifest CSS can't reach a shadow tree)
+content/content-script.js hover button, save sheet, area capture, toasts
+popup/                   sign-in and dashboard
+options/                 settings page
+scripts/check.mjs        pre-package gate
 ```
 
-### Building for Production
+Two rules the code depends on:
 
-```bash
-npm run build
-```
+- **All network I/O happens in the service worker.** Fetches from an MV3 worker
+  are exempt from CORS under `host_permissions`; the same fetch from a content
+  script would be blocked, because `config/cors.php` does not allow
+  `chrome-extension://` origins.
+- **All in-page UI lives in one shadow root.** Host-page CSS cannot reach it and
+  ours cannot leak out. v1 wrapped every `<img>` in a positioned `div`, which
+  broke layout on grid and `object-fit` sites.
 
-This creates a `dist/` directory with the production-ready extension.
+## Server contract
 
-### Testing
+Endpoints are defined in `server/routes/api/inspiration.php` and implemented in
+`InspirationController`. Things worth knowing before changing the client:
 
-```bash
-npm test
-```
+| Behaviour | Detail |
+|---|---|
+| Auth | `POST /api/login` with `app_type: chrome_extension`. That value must stay registered in `config/session-management.php` `valid_app_types`, or login returns 400. |
+| Tenant context | Every authenticated request sends `X-Tenant-Company` / `X-Tenant-Brand` (plus the legacy `X-Company-ID` / `X-Brand-ID`), mirroring `client/plugins/axios.ts`. Without them the server falls back to the user's `selected_brand_id` setting — i.e. whichever brand they last picked in the web app. |
+| Pin creation | `POST /inspiration/pins` needs `board_id` and `title`; image comes from either `image_url` or a multipart `image` (captures use the latter). |
+| Linking | `POST /inspiration/pins/{id}/link` accepts `linkable_type` of **`style` or `component` only** — not suppliers. One link per call. |
+| Boards | `GET /inspiration/boards` is scoped to `user_id`, so it returns only boards you own, not team boards you collaborate on. |
+| Legacy | `POST /inspiration/save-pin` still exists for v1 installs. It ignores board choice and dumps everything into an auto-created "Pinterest Saves" board. The current extension does not use it. |
 
-## API Reference
+## Known gaps
 
-### Chrome Extension APIs Used
-
-- `chrome.contextMenus` - Right-click menu integration
-- `chrome.tabs` - Tab management and screenshot capture
-- `chrome.storage` - Persistent storage for auth and preferences
-- `chrome.runtime` - Background script communication
-- `chrome.notifications` - User notifications
-
-### Kobo API Endpoints
-
-The extension communicates with the following Kobo API endpoints:
-
-- `POST /api/auth/login` - Authentication
-- `GET /api/inspiration/boards` - List boards
-- `POST /api/inspiration/boards` - Create board
-- `POST /api/inspiration/pins` - Create pin
-- `POST /api/files/upload` - Upload images
-- `GET /api/styles` - Search styles
-- `GET /api/components` - Search components
-- `GET /api/suppliers` - Search suppliers
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Failed**
-   - Ensure you're using correct Kobo credentials
-   - Check if your account has API access enabled
-   - Verify the API URL is correct
-
-2. **Images Not Saving**
-   - Check if the image URL is accessible
-   - Ensure you have permission to access the image
-   - Try using the screenshot feature instead
-
-3. **Extension Not Loading**
-   - Reload the extension in Chrome
-   - Check for console errors
-   - Ensure all files are present
-
-### Debug Mode
-
-Enable debug mode in the console:
-
-```javascript
-localStorage.setItem('kobo_debug', 'true');
-```
-
-## Security
-
-- All API communications use HTTPS
-- Authentication tokens are stored securely in Chrome storage
-- CORS is properly configured for cross-origin requests
-- Content Security Policy prevents XSS attacks
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## License
-
-Proprietary - Kobo PLM
-
-## Support
-
-For support, please contact:
-- Email: support@kobo-plm.com
-- Documentation: https://docs.kobo-plm.com/extensions/inspiration-board
-
-## Roadmap
-
-### Version 1.1
-- [ ] AI-powered auto-tagging
-- [ ] Bulk pin operations
-- [ ] Board templates
-- [ ] Export to PDF/PowerPoint
-
-### Version 1.2
-- [ ] Video frame extraction
-- [ ] Font/typography capture
-- [ ] Pattern recognition
-- [ ] Trend analysis
-
-### Version 2.0
-- [ ] Mobile companion app
-- [ ] Real-time collaboration
-- [ ] Advanced image editing
-- [ ] Integration with design tools
-
----
-
-Built with ❤️ by the Kobo team
+- Board list shows only boards you own (a server-side scope, not a client issue).
+- Pins cannot be linked to suppliers — the server restricts `linkable_type` to
+  style and component.
+- Text-only pins are saved as a page screenshot with the selection as the note;
+  the server has no first-class text pin type on this route.
+- No automated tests. `npm run check` is a syntax and wiring gate, not a test suite.
