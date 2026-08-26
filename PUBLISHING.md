@@ -147,14 +147,22 @@ Copy these into the console verbatim. Each permission needs its own.
 **`host_permissions: <all_urls>`** — the one that draws scrutiny:
 
 ```
-The extension's core function is saving images the user finds anywhere on the
-web into their Kōbō inspiration boards. Designers research across an
-unpredictable range of sites — retailer product pages, editorial titles,
-Pinterest, supplier catalogues, trade publications — so the set of sites cannot
-be enumerated in advance. The extension needs host access to read the source
-URL of an image the user explicitly chooses to save, and to render the save
-dialog on that page. It does not read, transmit or store page content on any
-site until the user actively clicks to save a specific image.
+Kōbō Inspiration lets a designer save any image they find on the web into
+their Kōbō inspiration board. Design research happens across an unpredictable
+range of sites — retailer product pages, editorial titles, Pinterest, supplier
+catalogues, trade publications — so the set of sites cannot be enumerated in
+advance, which is why a narrower host list is not workable for this feature.
+
+Host access is used for exactly two things: rendering the save dialog on the
+page the user is viewing, and reading the URL of the specific image they have
+chosen to save.
+
+The extension transmits nothing while the user is simply browsing. Only when
+they explicitly click to save an image does it send that image's URL, the page
+URL, the page title and the image's alt text to the user's own Kōbō account.
+If tag suggestions are enabled, it additionally reads the page's own keywords
+meta tag. No page content is stored locally, and no browsing history or user
+activity is recorded or transmitted.
 ```
 
 **`storage`**
