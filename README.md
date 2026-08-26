@@ -32,6 +32,17 @@ links set at save time.
 - Switch between Production / Staging / Local API targets.
 - Read-only view of the current keyboard shortcuts.
 
+## Distribution
+
+Not yet published. There is no Chrome Web Store listing and no extension ID,
+so today the only way to run it is load-unpacked. **`PUBLISHING.md` is the
+runbook** for getting it listed — store copy, permission justifications and
+data disclosures are all written; what remains needs a Google account.
+
+Note there is also nothing in the Kōbō app pointing users at the extension.
+Publishing and being discoverable are separate jobs; see the end of
+`PUBLISHING.md`.
+
 ## Install (development)
 
 There is **no build step** — Chrome loads the source directly.
@@ -43,9 +54,14 @@ There is **no build step** — Chrome loads the source directly.
 Before packaging or after any edit:
 
 ```bash
-npm run check      # manifest references, JS syntax, no hardcoded hosts
-npm run package    # zips the loadable extension
+npm run check      # manifest refs, JS syntax, hardcoded hosts, shadow-DOM classes
+npm run package    # runs the checks, then zips for the Web Store
 ```
+
+The staging and local environment options in Settings appear **only in an
+unpacked install** (`chrome.management.getSelf().installType`). A Web Store
+build is pinned to production, so a customer can't strand themselves on a
+server that isn't there.
 
 ## Architecture
 

@@ -1,4 +1,4 @@
-import { getSettings, saveSettings, ENVIRONMENTS, DEFAULT_ENVIRONMENT } from '../lib/config.js';
+import { getSettings, saveSettings, isDevelopmentBuild, ENVIRONMENTS, DEFAULT_ENVIRONMENT } from '../lib/config.js';
 
 const $ = id => document.getElementById(id);
 
@@ -27,12 +27,20 @@ async function init() {
 
   $('version').textContent = `v${chrome.runtime.getManifest().version}`;
 
-  /* environment */
+  /* environment — the switcher exists only in unpacked/dev installs */
   const envSelect = $('environment');
-  envSelect.innerHTML = Object.entries(ENVIRONMENTS)
-    .map(([key, env]) => `<option value="${key}">${env.label}</option>`)
-    .join('');
-  envSelect.value = settings.environment;
+  const isDev = await isDevelopmentBuild();
+  const available = isDev
+    ? Object.entries(ENVIRONMENTS)
+    : Object.entries(ENVIRONMENTS).filter(([key]) => key === DEFAULT_ENVIRONMENT);
+
+  envSelect.innerHTML = available.map(([key, env]) => `<option value="${key}">${env.label}</option>`).join('');
+  envSelect.value = isDev ? settings.environment : DEFAULT_ENVIRONMENT;
+  envSelect.disabled = !isDev;
+
+  if (!isDev) {
+    document.querySelector('label[for="environment"]').closest('.setting').classList.add('hidden');
+  }
   $('envWarning').classList.toggle('hidden', settings.environment === DEFAULT_ENVIRONMENT);
 
   envSelect.addEventListener('change', async () => {

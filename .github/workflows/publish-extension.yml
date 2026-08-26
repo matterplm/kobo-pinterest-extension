@@ -1,0 +1,124 @@
+# Publishes a new version to the Chrome Web Store when a v* tag is pushed.
+#
+# DISABLED UNTIL SECRETS EXIST. The Web Store API can only *update* an item
+# that already exists, so the first upload must be done by hand through the
+# developer console — see PUBLISHING.md. Once the listing exists:
+#
+#   1. Google Cloud console -> enable the Chrome Web Store API
+#   2. Create an OAuth client (type: Desktop app) -> client ID + secret
+#   3. Mint a refresh token with scope
+#      https://www.googleapis.com/auth/chromewebstore
+#   4. Add four repository secrets:
+#        CWS_EXTENSION_ID, CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN
+#
+# Then: bump "version" in manifest.json, tag it, push the tag.
+#
+#   git tag v2.0.1 && git push origin v2.0.1
+
+name: Publish extension
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify the package
+        run: node scripts/check.mjs
+
+      - name: Check the tag matches manifest version
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$MANIFEST_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag $TAG_VERSION does not match manifest version $MANIFEST_VERSION"
+            exit 1
+          fi
+
+          echo "Publishing version $MANIFEST_VERSION"
+
+      - name: Build the zip
+        run: |
+          zip -r extension.zip \
+            manifest.json background content lib popup options assets \
+            -x '*.DS_Store'
+          ls -lh extension.zip
+
+      - name: Fail early if credentials are missing
+        env:
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+        run: |
+          if [ -z "$CWS_EXTENSION_ID" ]; then
+            echo "::error::Web Store secrets are not configured. See PUBLISHING.md."
+            exit 1
+          fi
+
+      - name: Exchange the refresh token for an access token
+        id: auth
+        env:
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: |
+          TOKEN=$(curl -sf -X POST https://oauth2.googleapis.com/token \
+            -d "client_id=$CLIENT_ID" \
+            -d "client_secret=$CLIENT_SECRET" \
+            -d "refresh_token=$REFRESH_TOKEN" \
+            -d 'grant_type=refresh_token' | jq -r '.access_token')
+
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "::error::Could not obtain an access token — the refresh token may have been revoked."
+            exit 1
+          fi
+
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the new version
+        env:
+          TOKEN: ${{ steps.auth.outputs.token }}
+          EXT_ID: ${{ secrets.CWS_EXTENSION_ID }}
+        run: |
+          RESPONSE=$(curl -s \
+            -H "Authorization: Bearer $TOKEN" \
+            -H 'x-goog-api-version: 2' \
+            -X PUT -T extension.zip \
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/$EXT_ID")
+
+          echo "$RESPONSE"
+
+          if echo "$RESPONSE" | jq -e '.uploadState == "FAILURE"' > /dev/null; then
+            echo "::error::Upload rejected: $(echo "$RESPONSE" | jq -r '.itemError[]?.error_detail')"
+            exit 1
+          fi
+
+      # Publishes to whatever visibility the listing already has — publishing an
+      # unlisted item keeps it unlisted. It does NOT make a private item public.
+      - name: Submit for review
+        env:
+          TOKEN: ${{ steps.auth.outputs.token }}
+          EXT_ID: ${{ secrets.CWS_EXTENSION_ID }}
+        run: |
+          RESPONSE=$(curl -s \
+            -H "Authorization: Bearer $TOKEN" \
+            -H 'x-goog-api-version: 2' \
+            -H 'Content-Length: 0' \
+            -X POST \
+            "https://www.googleapis.com/chromewebstore/v1.1/items/$EXT_ID/publish")
+
+          echo "$RESPONSE"
+
+          if echo "$RESPONSE" | jq -e '.status[]? | select(. == "NOT_AUTHORIZED")' > /dev/null; then
+            echo "::error::Not authorised to publish this item."
+            exit 1
+          fi
